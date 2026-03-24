@@ -54,7 +54,9 @@ def get_actions_states(*, tokens=None, tokseq_len=None, actions=None):
         # if cano_act not in act_allowed:
         #     import pdb
         #     pdb.set_trace()
-        assert cano_act in act_allowed, 'current action not in the allowed space? check the rules.'
+        # FIX (Vietnamese): concepts not in English canonical action space → skip
+        if cano_act not in act_allowed:
+            return None  # caller (binarize) will skip this sentence
         amr_state_machine.reform_and_apply_action(action=act)
 
     assert len(amr_state_machine.actions_nopos) == len(actions) \

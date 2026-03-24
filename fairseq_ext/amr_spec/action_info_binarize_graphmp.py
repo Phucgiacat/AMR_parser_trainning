@@ -113,6 +113,13 @@ class ActionStatesBinarizer:
 
                 actions_states = get_actions_states(tokens=tokenize(line), actions=tokenize(actions))
 
+                # FIX (Vietnamese): skip sentences with invalid actions
+                if actions_states is None:
+                    line = f.readline()
+                    actions = g.readline()
+                    count += 1
+                    continue
+
                 # construct actions states tensors
                 actions_states_tensors = {}    # to store the action states converted to tensors
 
