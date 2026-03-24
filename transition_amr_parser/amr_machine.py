@@ -749,7 +749,8 @@ class Stats():
     def update_sentence_stats(self, oracle, machine):
 
         # Note that we do not ignore this one either way
-        self.tokens.append(machine.tokens)
+        # FIX (Vietnamese): append <ROOT> sentinel token required by state machine
+        self.tokens.append(list(machine.tokens) + ['<ROOT>'])
         self.action_sequences.append(machine.action_history)
         base_actions = [x.split('(')[0] for x in machine.action_history]
         self.action_count.update(base_actions)
