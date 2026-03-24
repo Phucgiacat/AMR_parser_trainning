@@ -37,24 +37,22 @@ def graph_alignments(unaligned_nodes, amr):
 
     fix_alignments = {}
     for (src, _, tgt) in amr.edges:
+        tgt_align = amr.alignments.get(tgt)  # FIX: use .get() for penman (empty alignments)
+        src_align = amr.alignments.get(src)
         if (
             src in unaligned_nodes
-            and amr.alignments[tgt] is not None
-            and max(amr.alignments[tgt])
+            and tgt_align is not None
+            and max(tgt_align)
                 > fix_alignments.get(src, 0)
         ):
-            # # debug: to justify to change 0 to -1e6 for a test data corner
-            # case; see if there are other cases affected
-            # if max(amr.alignments[tgt]) <= fix_alignments.get(src, 0):
-            #     breakpoint()
-            fix_alignments[src] = max(amr.alignments[tgt])
+            fix_alignments[src] = max(tgt_align)
         elif (
             tgt in unaligned_nodes
-            and amr.alignments[src] is not None
-            and min(amr.alignments[src])
+            and src_align is not None
+            and min(src_align)
                 < fix_alignments.get(tgt, 1e6)
         ):
-            fix_alignments[tgt] = max(amr.alignments[src])
+            fix_alignments[tgt] = max(src_align)
 
     return fix_alignments
 
