@@ -124,7 +124,9 @@ class ActionStatesBinarizer:
                     # this is a bit faster than above
                     vocab_ids_allowed = list(
                         itertools.chain.from_iterable(
-                            [self.canonical_act_ids[act] for act in act_allowed]
+                            # FIX (Vietnamese): skip actions not in canonical_act_ids
+                            # Pretrained model (English) may not have all Vietnamese actions
+                            [self.canonical_act_ids[act] for act in act_allowed if act in self.canonical_act_ids]
                         )
                     )
                     vocab_mask[i][vocab_ids_allowed] = 1

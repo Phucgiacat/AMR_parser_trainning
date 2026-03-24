@@ -29,6 +29,16 @@ done
 . set_environment.sh
 
 set -o nounset
+
+# FIX (Vietnamese): set default values to avoid unbound variable crash
+# These may not be exported from all config files
+src_fix_emb_use=${src_fix_emb_use:-0}
+USE_PRED_RULES=${USE_PRED_RULES:-0}
+LINKER_CACHE_PATH=${LINKER_CACHE_PATH:-""}
+SRCTAG=${SRCTAG:-""}
+TGTTAG=${TGTTAG:-""}
+BATCH_SIZE=${BATCH_SIZE:-32}
+
 # extract config from checkpoint path
 model_folder=$(dirname $first_path)
 config=$model_folder/config.sh
