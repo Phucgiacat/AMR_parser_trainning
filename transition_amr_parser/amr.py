@@ -279,6 +279,7 @@ class AMR():
         nodes = {}
         alignments = {}
         edges = []
+        root = None  # FIX (Vietnamese): default, may not exist in all AMR formats
         for key, value in metadata.items():
             if key == 'edge':
                 for items in value:
@@ -301,6 +302,10 @@ class AMR():
             elif key == 'root':
                 root = value[0].split('\t')[1]
 
+        # FIX (Vietnamese): if no ::root in metadata, pick first node as root
+        if root is None and nodes:
+            root = next(iter(nodes))
+
         # read metadata
         graph_id = None
         if metadata['id']:
@@ -309,6 +314,7 @@ class AMR():
         return cls(tokens, nodes, edges, root, penman=None,
                    alignments=alignments, clean=True, connect=False,
                    id=graph_id)
+
 
     def get_metadata(self):
         """
