@@ -500,7 +500,7 @@ class SequenceGenerator(object):
                                 act_allowed.remove('PRED')
                                 pred_allowed = list(self.pred_rules[src_token].keys())
 
-                    vocab_ids_allowed = set().union(*[set(canonical_act_ids[act]) for act in act_allowed])
+                    vocab_ids_allowed = set().union(*[set(canonical_act_ids[act]) for act in act_allowed if act in canonical_act_ids])
 
                     # use predicate rules to further restrict the action space for PRED actions
                     if pred_allowed is not None:
