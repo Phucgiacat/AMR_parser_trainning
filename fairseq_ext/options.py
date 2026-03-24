@@ -266,7 +266,9 @@ def add_preprocess_args(parser):
     # NOTE: Previous default "17 18 19 20 21 22 23 24"
     group.add_argument('--bert-layers', nargs='+', type=int,
                        help='RoBERTa layers to extract (default last)')
-    group.add_argument('--langs', required=True, metavar='LANG',
+    group.add_argument('--langs', required=False,
+                       default='ar_AR,cs_CZ,de_DE,en_XX,es_XX,et_EE,fi_FI,fr_XX,gu_IN,hi_IN,it_IT,ja_XX,kk_KZ,ko_KR,lt_LT,lv_LV,my_MM,ne_NP,nl_XX,ro_RO,ru_RU,si_LK,tr_TR,vi_VN,zh_CN',
+                       metavar='LANG',
                        help='comma-separated list of monolingual language')
     
 
