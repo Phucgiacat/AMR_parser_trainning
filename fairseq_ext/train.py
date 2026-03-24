@@ -244,7 +244,10 @@ def main(args):
                     model.decoder.output_projection.weight.copy_(composite_embed.embedding_weight)
 
     else:
-        raise ValueError
+        # FIX (Vietnamese): for architectures without 'bart'/'roberta' in name
+        # (e.g. transformer_tgt_pointer_graphmp), skip BART init.
+        # Weights come from --restore-file checkpoint instead.
+        logger.info('-' * 10 + ' skipping BART/RoBERTa init (arch has no bart/roberta) ' + '-' * 10)
     # ==========================================================================
 
     # breakpoint()
