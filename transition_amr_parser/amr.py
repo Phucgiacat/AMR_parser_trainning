@@ -242,8 +242,31 @@ class AMR():
         if 'id' in graph.metadata:
             graph_id = graph.metadata['id']
 
-        return cls(tokens, nodes, edges, graph.top, penman=graph, clean=True,
-                   connect=False, id=graph_id)
+        # FIX (Vietnamese): extract ~e.i alignments from penman epidata
+        # penman stores alignment annotations in graph.epidata as
+        # penman.surface.Alignment objects with indices attribute
+        alignments = {}
+        try:
+            import penman.surface as ps
+            for triple, epis in graph.epidata.items():
+                var = triple[0]  # source node variable
+                for epi in epis:
+                    if isinstance(epi, ps.Alignment) and epi.indices:
+                        if var not in alignments:
+                            alignments[var] = list(epi.indices)
+                        else:
+                            alignments[var].extend(list(epi.indices))
+        except Exception:
+            pass  # if epidata not available, leave alignments empty
+
+        # Convert empty dict to None to signal "no alignments"
+        if not alignments:
+            alignments = None
+
+        return cls(tokens, nodes, edges, graph.top, penman=graph,
+                   alignments=alignments, clean=True, connect=False,
+                   id=graph_id)
+
 
     @classmethod
     def from_metadata(cls, penman_text, tokenize=False):
