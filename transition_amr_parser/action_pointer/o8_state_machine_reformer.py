@@ -8,13 +8,15 @@ from transition_amr_parser.action_pointer.o8_state_machine import AMRStateMachin
 
 
 def peel_pointer(action, pad=-1):
-    if action.startswith('LA') or action.startswith('RA'):
-        action, properties = action.split('(')
+    # FIX (Vietnamese): strip '>' prefix from arc actions (e.g. '>RA(0,:mod)' → 'RA(0,:mod)')
+    clean = action[1:] if action.startswith('>') else action
+    if clean.startswith('LA') or clean.startswith('RA'):
+        clean, properties = clean.split('(')
         properties = properties[:-1]    # remove the ')' at last position
         properties = properties.split(',')    # split to pointer value and label
         pos = int(properties[0].strip())
         label = properties[1].strip()    # remove any leading and trailing white spaces
-        action_label = action + '(' + label + ')'
+        action_label = clean + '(' + label + ')'
         return (action_label, pos)
     else:
         return (action, pad)
@@ -147,6 +149,14 @@ class AMRActionReformer(AMRStateMachine):
             self.current_node_action_idx = self.action_idx
             # update the node position reference
             self.node_action_idx_map[self.current_node_action_idx] = self.action_idx
+        # FIX (Vietnamese): detect Vietnamese concept words that canonical_action_form maps to PRED
+        # These don't start with known action prefixes but will be treated as PRED in apply_action_and_get_states
+        elif not action_nopos.startswith(('SHIFT', 'REDUCE', 'MERGE', 'LA', 'RA', 'CLOSE', 'DEPENDENT', 'ROOT')):
+            cano = AMRStateMachine.canonical_action_form(action_nopos)
+            if cano in ['PRED', 'COPY_LEMMA', 'COPY_SENSE01', 'ENTITY']:
+                self.current_node_action = action_nopos
+                self.current_node_action_idx = self.action_idx
+                self.node_action_idx_map[self.current_node_action_idx] = self.action_idx
 
         # move the action index by 1
         self.action_idx += 1

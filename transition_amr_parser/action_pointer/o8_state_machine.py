@@ -272,6 +272,9 @@ class AMRStateMachine:
     @classmethod
     def read_action(cls, action):
         """Read action string and parse it."""
+        # FIX (Vietnamese): strip '>' prefix from arc actions (e.g. '>RA(0,:mod)' → 'RA(0,:mod)')
+        if action.startswith('>'):
+            action = action[1:]
         if '(' not in action:
             return action, None
         elif action.startswith('LA') or action.startswith('RA'):
@@ -302,11 +305,6 @@ class AMRStateMachine:
             else:
                 props = [arg_string]
 
-            # TODO check if closing this (for functionality consistency) would cause any problem
-            # # To keep original name to keep learner happy
-            # if action_label == 'DEPENDENT':
-            #     action_label = action
-
             return action_label, props
 
     @classmethod
@@ -314,6 +312,9 @@ class AMRStateMachine:
         """Get the canonical form of an action with labels/properties."""
         if action in cls.canonical_actions:
             return action
+        # FIX (Vietnamese): 'ROOT' oracle action → treat as SHIFT (per-sentence control, no node)
+        if action == 'ROOT':
+            return 'SHIFT'
         action_label, properties = cls.read_action(action)
         if action_label.startswith('LA'):
             if properties and len(properties) > 1 and properties[1] == 'root':
@@ -329,6 +330,9 @@ class AMRStateMachine:
         """Get the canonical form of an action with labels/properties, and return the pointer value for arcs."""
         if action in cls.canonical_actions:
             return action, None
+        # FIX (Vietnamese): 'ROOT' oracle action → treat as SHIFT
+        if action == 'ROOT':
+            return 'SHIFT', None
         action_label, properties = cls.read_action(action)
         if action_label.startswith('LA'):
             if properties and len(properties) > 1 and properties[1] == 'root':
