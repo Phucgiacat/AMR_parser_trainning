@@ -272,7 +272,16 @@ class AMRActionReformer(AMRStateMachine):
             self.actions_edge_1stnode_mask.append(0)
             self.actions_edge_mask.append(0)
         else:
-            raise Exception(f'Unrecognized canonical action: {action}')
+            # FIX (Vietnamese): unrecognized concept → treat as PRED node prediction
+            # canonical_action_form returns Vietnamese words unchanged, no exception raised
+            self.actions_nodemask.append(1)
+            self.actions_latest_node = len(self.actions_nodemask) - 1
+            if self.node_action_idx_map:
+                assert self.node_action_idx_map[self.actions_latest_node] == self.time_step
+            else:
+                self.node_action_idx_map[self.actions_latest_node] = self.time_step
+            self.actions_edge_1stnode_mask.append(1)
+            self.actions_edge_mask.append(0)
 
         self.actions_canonical.append(action)
 
