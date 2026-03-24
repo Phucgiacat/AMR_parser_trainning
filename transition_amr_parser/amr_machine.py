@@ -69,8 +69,8 @@ def fix_alignments(gold_amr):
     unaligned_nodes = set(gold_amr.nodes) - set(gold_amr.alignments)
     unaligned_nodes |= \
         set(nid for nid, pos in gold_amr.alignments.items() if pos is None)
-    unaligned_nodes = sorted(list(unaligned_nodes))
-    unaligned_nodes_original = sorted(list(unaligned_nodes))
+    unaligned_nodes = sorted(list(unaligned_nodes), key=str)  # FIX: penman=str ids, IBM=int ids
+    unaligned_nodes_original = sorted(list(unaligned_nodes), key=str)
 
     if not unaligned_nodes:
         # no need to do anything
