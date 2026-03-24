@@ -337,7 +337,8 @@ class AMRActionPointerGraphMPParsingTask(FairseqTask):
                 actions_file + '_nopos',
                 res['nseq'],
                 res['ntok'],
-                100 * res['nunk'] / res['ntok'],
+                # FIX (Vietnamese): guard against ntok=0 (all sentences skipped)
+                100 * res['nunk'] / res['ntok'] if res['ntok'] > 0 else 0.0,
                 self.tgt_dict.unk_word,
             )
         )
