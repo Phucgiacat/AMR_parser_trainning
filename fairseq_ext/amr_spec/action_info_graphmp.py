@@ -54,15 +54,15 @@ def get_actions_states(*, tokens=None, tokseq_len=None, actions=None):
         # if cano_act not in act_allowed:
         #     import pdb
         #     pdb.set_trace()
-        # FIX (Vietnamese): concepts not in English canonical action space → skip
+        # FIX (Vietnamese): canonical_action_form_ptr returns the raw Vietnamese word
+        # (e.g. 'chương') instead of 'PRED' because it only recognizes English AMR concepts.
+        # If the returned canonical form is not in act_allowed but PRED is, use PRED as
+        # fallback — Vietnamese words are node-prediction (PRED) actions.
         if cano_act not in act_allowed:
-            # DEBUG: print first failures
-            import sys; _dbg = getattr(get_actions_states, '_dbg_count', 0)
-            if _dbg < 2:
-                print(f'[DBG] cano_act={cano_act!r} not in act_allowed={act_allowed}', file=sys.stderr)
-                print(f'  act={act!r} tok_cursor={amr_state_machine.tok_cursor} tokens[:5]={tokens[:5]}', file=sys.stderr)
-                get_actions_states._dbg_count = _dbg + 1
-            return None  # caller (binarize) will skip this sentence
+            if 'PRED' in act_allowed:
+                cano_act = 'PRED'
+            else:
+                return None  # truly invalid action, skip sentence
         amr_state_machine.reform_and_apply_action(action=act)
 
     assert len(amr_state_machine.actions_nopos) == len(actions) \
