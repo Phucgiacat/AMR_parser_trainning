@@ -881,7 +881,10 @@ class StatsForVocab:
 def oracle(args):
 
     # Read AMR
-    amrs = read_amr(args.in_aligned_amr, ibm_format=True)
+    # FIX (Vietnamese): data uses penman+~e.i format, not IBM metadata format
+    # ibm_format=True reads # ::node / # ::edge / # ::root lines → empty for Vietnamese
+    # ibm_format=False reads penman graph directly; tokenize=True uses # ::snt
+    amrs = read_amr(args.in_aligned_amr, ibm_format=False, tokenize=True)
 
     # broken annotations that we ignore in stats
     # 'DATA/AMR2.0/aligned/cofill/train.txt'
