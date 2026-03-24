@@ -56,6 +56,12 @@ def get_actions_states(*, tokens=None, tokseq_len=None, actions=None):
         #     pdb.set_trace()
         # FIX (Vietnamese): concepts not in English canonical action space → skip
         if cano_act not in act_allowed:
+            # DEBUG: print first failures
+            import sys; _dbg = getattr(get_actions_states, '_dbg_count', 0)
+            if _dbg < 2:
+                print(f'[DBG] cano_act={cano_act!r} not in act_allowed={act_allowed}', file=sys.stderr)
+                print(f'  act={act!r} tok_cursor={amr_state_machine.tok_cursor} tokens[:5]={tokens[:5]}', file=sys.stderr)
+                get_actions_states._dbg_count = _dbg + 1
             return None  # caller (binarize) will skip this sentence
         amr_state_machine.reform_and_apply_action(action=act)
 
