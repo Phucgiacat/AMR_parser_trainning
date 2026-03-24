@@ -57,6 +57,56 @@ def graph_alignments(unaligned_nodes, amr):
     return fix_alignments
 
 
+def heuristic_align(gold_amr):
+    """
+    FIX (Vietnamese): Heuristic alignment when no ~e.i annotations exist.
+    1. String-match: align concept base to best-matching token
+    2. Fallback: distribute remaining nodes evenly across tokens
+    """
+    import re as _re
+    tokens_lower = [t.lower() for t in gold_amr.tokens]
+    n_tokens = len(gold_amr.tokens)
+
+    # Track how many nodes assigned to each token pos (for load balancing)
+    pos_load = defaultdict(int)
+
+    for nid, concept in gold_amr.nodes.items():
+        if nid in gold_amr.alignments and gold_amr.alignments[nid]:
+            continue  # already aligned
+        # Strip AMR frameset suffix: want-01 → want
+        base = _re.sub(r'-\d+$', '', str(concept)).lower()
+        # String match
+        best_pos, best_score = 0, -1
+        for i, tok in enumerate(tokens_lower):
+            tok_base = _re.sub(r'[^a-z]', '', tok)
+            con_base = _re.sub(r'[^a-z]', '', base)
+            if not tok_base or not con_base:
+                continue
+            # Use longest common prefix as score
+            score = 0
+            for a, b in zip(tok_base, con_base):
+                if a == b:
+                    score += 1
+                else:
+                    break
+            if score > best_score:
+                best_score, best_pos = score, i
+        # Only use string match if reasonably good (>= 3 chars match)
+        if best_score >= 3:
+            gold_amr.alignments[nid] = [best_pos]
+            pos_load[best_pos] += 1
+        else:
+            gold_amr.alignments[nid] = None  # will be handled in fallback
+
+    # Fallback: distribute unmatched nodes across token positions
+    unmatched = [nid for nid, pos in gold_amr.alignments.items() if pos is None]
+    for i, nid in enumerate(unmatched):
+        # Spread evenly; prefer lightly loaded positions
+        pos = i % n_tokens
+        gold_amr.alignments[nid] = [pos]
+        pos_load[pos] += 1
+
+
 def fix_alignments(gold_amr):
 
     # FIX (Vietnamese): from_penman sets alignments=None, treat as empty
@@ -80,24 +130,40 @@ def fix_alignments(gold_amr):
         gold_amr.alignments[node_id] = [0]
         return gold_amr, []
 
+    # FIX (Vietnamese): if ALL nodes are unaligned (no ~e.i in data),
+    # use heuristic string-match alignment before graph-vicinity fix
+    total_nodes = len(gold_amr.nodes)
+    if len(unaligned_nodes) == total_nodes:
+        heuristic_align(gold_amr)
+        # Re-check after heuristic
+        unaligned_nodes = [nid for nid in gold_amr.nodes
+                           if nid not in gold_amr.alignments
+                           or not gold_amr.alignments[nid]]
+        if not unaligned_nodes:
+            return gold_amr, unaligned_nodes_original
+
     # Align unaligned nodes by using graph vicinnity greedily (1 hop at a time)
     while unaligned_nodes:
-        fix_alignments = graph_alignments(unaligned_nodes, gold_amr)
-        for nid in unaligned_nodes:
-            if nid in fix_alignments:
-                gold_amr.alignments[nid] = [fix_alignments[nid]]
+        fix_align = graph_alignments(unaligned_nodes, gold_amr)
+        for nid in list(unaligned_nodes):
+            if nid in fix_align:
+                gold_amr.alignments[nid] = [fix_align[nid]]
                 unaligned_nodes.remove(nid)
 
         # debug: avoid infinite loop for AMR2.0 test data with bad alignments
-        if not fix_alignments:
+        if not fix_align:
             # breakpoint()
             print(red_background('hard fix on 0th token for fix_alignments'))
             for k, v in list(gold_amr.alignments.items()):
                 if v is None:
                     gold_amr.alignments[k] = [0]
+            # FIX (Vietnamese): assign any remaining unaligned nodes to 0
+            for nid in list(unaligned_nodes):
+                gold_amr.alignments[nid] = [0]
             break
 
     return gold_amr, unaligned_nodes_original
+
 
 
 def normalize(token):
