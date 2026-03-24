@@ -62,7 +62,20 @@ def get_actions_states(*, tokens=None, tokseq_len=None, actions=None):
                 cano_act = 'PRED'
             else:
                 return None  # truly invalid action, skip sentence
-        amr_state_machine.reform_and_apply_action(action=act)
+        # Apply action.
+        # For Vietnamese PRED actions (cano_act='PRED', arc_pos=-1 from fallback),
+        # reform_and_apply_action internally calls canonical_action_form(vietnamese_word) → raises.
+        # Bypass it by calling reform_action + apply_action_and_get_states('PRED') separately.
+        if cano_act == 'PRED' and arc_pos == -1:
+            # reform_action (peel_pointer) does NOT call canonical_action_form → safe
+            amr_state_machine.reform_action(action=act)
+            # apply with explicit canonical 'PRED' (always recognized) instead of raw Vietnamese word
+            amr_state_machine.apply_action_and_get_states(
+                action='PRED',
+                arc_reformed_pos=amr_state_machine.actions_reformed_pos[-1]
+            )
+        else:
+            amr_state_machine.reform_and_apply_action(action=act)
 
     assert len(amr_state_machine.actions_nopos) == len(actions) \
         == len(amr_state_machine.actions_pos) \
