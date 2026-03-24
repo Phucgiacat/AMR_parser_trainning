@@ -111,7 +111,11 @@ class ActionStatesBinarizer:
                     assert actions_end > 0 and g.tell() > actions_end
                     break
 
-                actions_states = get_actions_states(tokens=tokenize(line), actions=tokenize(actions))
+                # FIX (Vietnamese): catch all errors (invalid actions, short sequences, etc.)
+                try:
+                    actions_states = get_actions_states(tokens=tokenize(line), actions=tokenize(actions))
+                except Exception:
+                    actions_states = None
 
                 # FIX (Vietnamese): skip sentences with invalid actions
                 if actions_states is None:
