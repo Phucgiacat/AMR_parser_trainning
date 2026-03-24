@@ -61,6 +61,10 @@ def graph_alignments(unaligned_nodes, amr):
 
 def fix_alignments(gold_amr):
 
+    # FIX (Vietnamese): from_penman sets alignments=None, treat as empty
+    if gold_amr.alignments is None:
+        gold_amr.alignments = {}
+
     # Fix unaligned nodes by graph vicinity
     unaligned_nodes = set(gold_amr.nodes) - set(gold_amr.alignments)
     unaligned_nodes |= \
