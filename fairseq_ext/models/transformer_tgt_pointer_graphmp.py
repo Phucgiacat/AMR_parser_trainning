@@ -790,14 +790,12 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             else:
                 raise NotImplementedError('Deprecated: use stack-transformer branch')
 
-            x, attn = layer(
+            x, _attn_src, _self_attn_state, attn = layer(
                 x,
                 encoder_out['encoder_out'] if encoder_out is not None else None,
                 encoder_out['encoder_padding_mask'] if encoder_out is not None else None,
                 incremental_state,
                 self_attn_mask=self.buffered_future_mask(x) if incremental_state is None else None,
-                head_attention_masks=head_attention_masks,
-                head_positions=head_positions,
                 cross_attention_mask=(cross_attention_mask
                                       if layer_index in self.args.tgt_src_align_layers
                                       else None),
