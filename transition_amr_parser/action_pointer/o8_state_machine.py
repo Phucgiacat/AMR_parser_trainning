@@ -27,6 +27,11 @@ Note:
     - Do not put actions inside actions, which may cause issue with state management.
 """
 
+def get_spacy_lemmatizer():
+    """Stub: return None for Vietnamese (no English spacy lemmatizer needed)."""
+    return None
+
+
 entity_rules_json = None
 NUM_RE = re.compile(r'^([0-9]|,)+(st|nd|rd|th)?$')
 entity_rule_stats = Counter()
