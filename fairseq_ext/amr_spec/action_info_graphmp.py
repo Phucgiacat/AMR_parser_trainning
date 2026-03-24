@@ -48,16 +48,15 @@ def get_actions_states(*, tokens=None, tokseq_len=None, actions=None):
         allowed_cano_actions.append(act_allowed)
         # token cursor
         token_cursors.append(amr_state_machine.tok_cursor)
-        # apply the current action
-        # cano_act = amr_state_machine.canonical_action_form(act)
-        cano_act, arc_pos = amr_state_machine.canonical_action_form_ptr(act)
-        # if cano_act not in act_allowed:
-        #     import pdb
-        #     pdb.set_trace()
-        # FIX (Vietnamese): canonical_action_form_ptr returns the raw Vietnamese word
-        # (e.g. 'chương') instead of 'PRED' because it only recognizes English AMR concepts.
-        # If the returned canonical form is not in act_allowed but PRED is, use PRED as
-        # fallback — Vietnamese words are node-prediction (PRED) actions.
+        # FIX (Vietnamese): canonical_action_form_ptr raises Exception for Vietnamese words
+        # like 'chương', 'cừu' since it only knows English AMR concept patterns.
+        # Catch the exception and treat as PRED (node prediction) with no arc pointer.
+        try:
+            cano_act, arc_pos = amr_state_machine.canonical_action_form_ptr(act)
+        except Exception:
+            cano_act, arc_pos = 'PRED', -1
+
+        # If still not in allowed set but PRED is, use PRED fallback
         if cano_act not in act_allowed:
             if 'PRED' in act_allowed:
                 cano_act = 'PRED'
