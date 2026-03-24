@@ -314,28 +314,34 @@ class AMRStateMachine:
         """Get the canonical form of an action with labels/properties."""
         if action in cls.canonical_actions:
             return action
-        action, properties = cls.read_action(action)
-        if action.startswith('LA'):
-            if properties[1] == 'root':
-                action = 'LA(root)'
-        # assert action in cls.canonical_actions
-        return action
+        action_label, properties = cls.read_action(action)
+        if action_label.startswith('LA'):
+            if properties and len(properties) > 1 and properties[1] == 'root':
+                action_label = 'LA(root)'
+        # FIX (Vietnamese): if action_label is not a known canonical action,
+        # it's a Vietnamese concept word → treat as PRED
+        if action_label not in cls.canonical_actions:
+            return 'PRED'
+        return action_label
 
     @classmethod
     def canonical_action_form_ptr(cls, action):
         """Get the canonical form of an action with labels/properties, and return the pointer value for arcs."""
         if action in cls.canonical_actions:
             return action, None
-        action, properties = cls.read_action(action)
-        if action.startswith('LA'):
-            if properties[1] == 'root':
-                action = 'LA(root)'
-        if action.startswith('LA') or action.startswith('RA'):
+        action_label, properties = cls.read_action(action)
+        if action_label.startswith('LA'):
+            if properties and len(properties) > 1 and properties[1] == 'root':
+                action_label = 'LA(root)'
+        if action_label.startswith('LA') or action_label.startswith('RA'):
             arc_pos = properties[0]
         else:
             arc_pos = None
-        # assert action in cls.canonical_actions
-        return action, arc_pos
+        # FIX (Vietnamese): if action_label is not a known canonical action,
+        # it's a Vietnamese concept word → treat as PRED
+        if action_label not in cls.canonical_actions:
+            return 'PRED', None
+        return action_label, arc_pos
 
     @classmethod
     def canonical_action_to_dict(cls, vocab):
@@ -416,7 +422,8 @@ class AMRStateMachine:
                     elif prev_action in ['REDUCE', 'SHIFT']:
                         cano_actions = pre_node_actions
                     else:
-                        raise ValueError('unallowed previous action sequence.')
+                        # FIX (Vietnamese): treat unrecognized as gen_node_actions
+                        cano_actions = post_node_actions
         elif self.tok_cursor == self.tokseq_len - 1:    # at least 1, since self.tokseq_len is at least 2
             assert past_actions, 'impossible to move to the last token position with empty action sequence'
             # currently pointing to the '<ROOT>' token
@@ -456,7 +463,8 @@ class AMRStateMachine:
             elif prev_action in ['REDUCE', 'SHIFT']:
                 cano_actions = pre_node_actions
             else:
-                raise ValueError('unallowed previous action sequence.')
+                # FIX (Vietnamese): treat unrecognized as gen_node_actions
+                cano_actions = post_node_actions
 
         # modify for special cases for MERGE
         if self.tok_cursor + 1 == self.tokseq_len - 1:
@@ -517,7 +525,9 @@ class AMRStateMachine:
             self.is_postprocessed = True    # do nothing for postprocessing in canonical mode
             self.actions_nodemask.append(0)
         else:
-            raise Exception(f'Unrecognized canonical action: {action}')
+            # FIX (Vietnamese): treat as PRED node prediction
+            self.actions_nodemask.append(1)
+            self.actions_latest_node = len(self.actions_nodemask) - 1
 
         self.actions_canonical.append(action)
 

@@ -162,12 +162,9 @@ class AMRActionReformer(AMRStateMachine):
             action (str): action string; corresponding to the decoder output sequence.
             arc_reformed_pos (int, optional): reformed arc pointer value. Defaults to None.
         """
-        # FIX (Vietnamese): canonical_action_form raises for Vietnamese words.
-        # Wrap and fall back to 'PRED' for any unrecognized action.
-        try:
-            action = AMRStateMachine.canonical_action_form(action)
-        except Exception:
-            action = 'PRED'
+        # FIX (Vietnamese): canonical_action_form now returns 'PRED' for unrecognized words.
+        # No need for try-except — it always returns a recognized canonical action.
+        action = AMRStateMachine.canonical_action_form(action)
 
         # check ending
         if self.is_postprocessed:
@@ -214,9 +211,6 @@ class AMRActionReformer(AMRStateMachine):
             self.actions_edge_pre_node_index.append(arc_reformed_pos)
             self.actions_edge_direction.append(-1)    # -1 for LA(root)
             # for the graph mask to include all previous nodes
-            # NOTE get(,[]).append() returns None!
-            # self.actions_edge_allpre_dict[self.time_step] = self.actions_edge_allpre_dict\
-            #     .get(self.time_step - 1, []).append((arc_reformed_pos, -1))
             self.actions_edge_allpre_dict[self.time_step] = self.actions_edge_allpre_dict\
                 .get(self.time_step - 1, []) + [(arc_reformed_pos, -1)]
             for pos, dirc in self.actions_edge_allpre_dict[self.time_step]:
@@ -255,9 +249,6 @@ class AMRActionReformer(AMRStateMachine):
             self.actions_edge_pre_node_index.append(arc_reformed_pos)
             self.actions_edge_direction.append(0 if action == 'LA' else 1)
             # for the graph mask to include all previous nodes
-            # NOTE get(,[]).append() returns None!
-            # self.actions_edge_allpre_dict[self.time_step] = self.actions_edge_allpre_dict \
-            #     .get(self.time_step - 1, []).append((arc_reformed_pos, 0 if action == 'LA' else 1))
             self.actions_edge_allpre_dict[self.time_step] = self.actions_edge_allpre_dict \
                 .get(self.time_step - 1, []) + [(arc_reformed_pos, 0 if action == 'LA' else 1)]
             for pos, dirc in self.actions_edge_allpre_dict[self.time_step]:
@@ -271,17 +262,7 @@ class AMRActionReformer(AMRStateMachine):
             self.actions_nodemask.append(0)
             self.actions_edge_1stnode_mask.append(0)
             self.actions_edge_mask.append(0)
-        else:
-            # FIX (Vietnamese): unrecognized concept → treat as PRED node prediction
-            # canonical_action_form returns Vietnamese words unchanged, no exception raised
-            self.actions_nodemask.append(1)
-            self.actions_latest_node = len(self.actions_nodemask) - 1
-            if self.node_action_idx_map:
-                assert self.node_action_idx_map[self.actions_latest_node] == self.time_step
-            else:
-                self.node_action_idx_map[self.actions_latest_node] = self.time_step
-            self.actions_edge_1stnode_mask.append(1)
-            self.actions_edge_mask.append(0)
+
 
         self.actions_canonical.append(action)
 
