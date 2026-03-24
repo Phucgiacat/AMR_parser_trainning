@@ -114,7 +114,13 @@ class ActionStatesBinarizer:
                 # FIX (Vietnamese): catch all errors (invalid actions, short sequences, etc.)
                 try:
                     actions_states = get_actions_states(tokens=tokenize(line), actions=tokenize(actions))
-                except Exception:
+                except Exception as e:
+                    # DEBUG: print first few errors to identify root cause
+                    if count < 3:
+                        import sys
+                        print(f'[SKIP] sent {count}: {type(e).__name__}: {e}', file=sys.stderr)
+                        print(f'  tokens[:5]={tokenize(line)[:5]}', file=sys.stderr)
+                        print(f'  actions[:5]={tokenize(actions)[:5]}', file=sys.stderr)
                     actions_states = None
 
                 # FIX (Vietnamese): skip sentences with invalid actions
