@@ -162,7 +162,12 @@ class AMRActionReformer(AMRStateMachine):
             action (str): action string; corresponding to the decoder output sequence.
             arc_reformed_pos (int, optional): reformed arc pointer value. Defaults to None.
         """
-        action = AMRStateMachine.canonical_action_form(action)
+        # FIX (Vietnamese): canonical_action_form raises for Vietnamese words.
+        # Wrap and fall back to 'PRED' for any unrecognized action.
+        try:
+            action = AMRStateMachine.canonical_action_form(action)
+        except Exception:
+            action = 'PRED'
 
         # check ending
         if self.is_postprocessed:
