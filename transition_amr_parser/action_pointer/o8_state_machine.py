@@ -612,8 +612,15 @@ class AMRStateMachine:
         # close and postprocessing
         elif action_label == 'CLOSE':
             self.CLOSE(**kwargs)
+        elif action_label == '-':
+            # '-' is a null/placeholder token from the action dictionary — skip silently
+            pass
+        elif action_label == 'ROOT':
+            # 'ROOT' oracle token — treat as SHIFT for reconstruction
+            self.SHIFT(None)
         else:
-            raise Exception(f'Unrecognized action: {action}')
+            # Bare word token from tgt_dict (e.g. 'em', 'name') — treat as PRED
+            self.PRED(action_label)
 
         # Increase time step
         self.time_step += 1
