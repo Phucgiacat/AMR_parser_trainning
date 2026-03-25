@@ -957,8 +957,12 @@ class AMRStateMachine:
         global entity_rules_json, entity_rule_stats, entity_rule_totals, entity_rule_fails
 
         if not entity_rules_json:
-            with open(entities_path, 'r', encoding='utf8') as f:
-                entity_rules_json = json.load(f)
+            try:
+                with open(entities_path, 'r', encoding='utf8') as f:
+                    content = f.read().strip()
+                    entity_rules_json = json.loads(content) if content else {}
+            except (FileNotFoundError, json.JSONDecodeError):
+                entity_rules_json = {}
 
         for entity_id in self.entities:
 
