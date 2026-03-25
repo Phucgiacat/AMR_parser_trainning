@@ -393,6 +393,12 @@ class AMR():
         """
         FIXME: Just modifies ::node line with respect to the original
         """
+        # FIX (Vietnamese): penman is None for state-machine-built graphs; fall back to legacy printer
+        if not self.penman:
+            return legacy_graph_printer(
+                self.get_metadata(), self.nodes, self.root, self.edges
+            ) + '\n'
+
         output = penman.encode(self.penman)
         # Try first to just modify existing JAMR annotation
         new_lines = []
@@ -402,7 +408,7 @@ class AMR():
                 modified = True
                 items = line.split('\t')
                 node_id = items[1]
-                if node_id in self.alignments:
+                if self.alignments and node_id in self.alignments:
                     start = min(self.alignments[node_id])
                     dend = max(self.alignments[node_id]) + 1
                     if len(items) == 4:
@@ -415,9 +421,9 @@ class AMR():
             new_lines.append(line)
         # if not we write it ourselves
         if not modified:
-            from ipdb import set_trace
-            set_trace(context=30)
-            print()
+            return legacy_graph_printer(
+                self.get_metadata(), self.nodes, self.root, self.edges
+            ) + '\n'
         return ('\n'.join(new_lines)) + '\n'
 
 
