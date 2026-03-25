@@ -190,7 +190,7 @@ class AMRStateMachine:
         self.root_id = -1    # or `self.tokseq_len - 1` for consistent positive values with other nodes
         # TODO 'root' should be tied with -1 currently <-- since -1 is a must for self.connect_graph() processing
         if self.amr_graph:
-            self.amr = AMR(tokens=self.tokens)
+            self.amr = AMR(tokens=self.tokens, nodes={}, edges=[], root='')
             for i, tok in enumerate(self.tokens):
                 if tok != "<ROOT>":
                     # note that the node id is NOT shifted by 1, compared with the AMR alignments
