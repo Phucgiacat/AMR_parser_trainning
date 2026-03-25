@@ -27,6 +27,11 @@ Note:
     - Do not put actions inside actions, which may cause issue with state management.
 """
 
+def get_spacy_lemmatizer():
+    """Stub: return None for Vietnamese (no English spacy lemmatizer needed)."""
+    return None
+
+
 entity_rules_json = None
 NUM_RE = re.compile(r'^([0-9]|,)+(st|nd|rd|th)?$')
 entity_rule_stats = Counter()
@@ -185,7 +190,7 @@ class AMRStateMachine:
         self.root_id = -1    # or `self.tokseq_len - 1` for consistent positive values with other nodes
         # TODO 'root' should be tied with -1 currently <-- since -1 is a must for self.connect_graph() processing
         if self.amr_graph:
-            self.amr = AMR(tokens=self.tokens)
+            self.amr = AMR(tokens=self.tokens, nodes={}, edges=[], root='', alignments={})
             for i, tok in enumerate(self.tokens):
                 if tok != "<ROOT>":
                     # note that the node id is NOT shifted by 1, compared with the AMR alignments
@@ -607,8 +612,15 @@ class AMRStateMachine:
         # close and postprocessing
         elif action_label == 'CLOSE':
             self.CLOSE(**kwargs)
+        elif action_label == '-':
+            # '-' is a null/placeholder token from the action dictionary — skip silently
+            pass
+        elif action_label == 'ROOT':
+            # 'ROOT' oracle token — treat as SHIFT for reconstruction
+            self.SHIFT(None)
         else:
-            raise Exception(f'Unrecognized action: {action}')
+            # Bare word token from tgt_dict (e.g. 'em', 'name') — treat as PRED
+            self.PRED(action_label)
 
         # Increase time step
         self.time_step += 1
@@ -945,8 +957,12 @@ class AMRStateMachine:
         global entity_rules_json, entity_rule_stats, entity_rule_totals, entity_rule_fails
 
         if not entity_rules_json:
-            with open(entities_path, 'r', encoding='utf8') as f:
-                entity_rules_json = json.load(f)
+            try:
+                with open(entities_path, 'r', encoding='utf8') as f:
+                    content = f.read().strip()
+                    entity_rules_json = json.loads(content) if content else {}
+            except (FileNotFoundError, json.JSONDecodeError):
+                entity_rules_json = {}
 
         for entity_id in self.entities:
 
@@ -1381,6 +1397,8 @@ class AMRStateMachine:
         # In the state machine, we get the alignments with index 0
         # However, in the AMR, alignments are stored with index 1, since that is the way the oracle expects it
 
+        if self.amr.alignments is None:
+            self.amr.alignments = {}
         for node in self.alignments:
             if type(self.alignments[node]) == int:
                 self.amr.alignments[node] = self.alignments[node] + 1

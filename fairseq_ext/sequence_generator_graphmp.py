@@ -500,7 +500,7 @@ class SequenceGenerator(object):
                                 act_allowed.remove('PRED')
                                 pred_allowed = list(self.pred_rules[src_token].keys())
 
-                    vocab_ids_allowed = set().union(*[set(canonical_act_ids[act]) for act in act_allowed])
+                    vocab_ids_allowed = set().union(*[set(canonical_act_ids[act]) for act in act_allowed if act in canonical_act_ids])
 
                     # use predicate rules to further restrict the action space for PRED actions
                     if pred_allowed is not None:
@@ -734,7 +734,8 @@ class SequenceGenerator(object):
             # for rows with valid pointer value, modify the arc action scores;
             # for rows with no valid pointer value, set the arc action scores to -inf to block
             if modify_arcact_score:
-                arc_action_ids = list(set().union(*[canonical_act_ids[act] for act in ['LA', 'RA', 'LA(root)']]))
+                arc_actions_available = [act for act in ['LA', 'RA', 'LA(root)'] if act in canonical_act_ids]
+                arc_action_ids = list(set().union(*[canonical_act_ids[act] for act in arc_actions_available])) if arc_actions_available else []
                 lprobs_arcs = lprobs[:, arc_action_ids]
                 lprobs_arcs[tgt_actions_nodemask_any, :] += coef * pointer_max[tgt_actions_nodemask_any].unsqueeze(1)
                 lprobs_arcs[~tgt_actions_nodemask_any, :] = -math.inf
