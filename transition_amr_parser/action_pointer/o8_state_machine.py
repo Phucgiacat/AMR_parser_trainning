@@ -190,7 +190,7 @@ class AMRStateMachine:
         self.root_id = -1    # or `self.tokseq_len - 1` for consistent positive values with other nodes
         # TODO 'root' should be tied with -1 currently <-- since -1 is a must for self.connect_graph() processing
         if self.amr_graph:
-            self.amr = AMR(tokens=self.tokens, nodes={}, edges=[], root='')
+            self.amr = AMR(tokens=self.tokens, nodes={}, edges=[], root='', alignments={})
             for i, tok in enumerate(self.tokens):
                 if tok != "<ROOT>":
                     # note that the node id is NOT shifted by 1, compared with the AMR alignments
@@ -1397,6 +1397,8 @@ class AMRStateMachine:
         # In the state machine, we get the alignments with index 0
         # However, in the AMR, alignments are stored with index 1, since that is the way the oracle expects it
 
+        if self.amr.alignments is None:
+            self.amr.alignments = {}
         for node in self.alignments:
             if type(self.alignments[node]) == int:
                 self.amr.alignments[node] = self.alignments[node] + 1
